@@ -1,0 +1,67 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GuildOS ER Diagram</title>
+<style>
+body { margin: 0; }
+#erd-detailed { padding: 0.5rem 0; }
+#erd-detailed svg { display: block; }
+</style>
+</head>
+<body>
+<div id="erd-detailed"></div>
+<script src="./guildos_er_diagram_shared.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11.15.0/dist/mermaid.min.js" integrity="sha384-yQ4mmBBT+vhTAwjFH0toJXNYJ6O4usWnt6EPIdWwrRvx2V/n5lXuDZQwQFeSFydF" crossorigin="anonymous"></script>
+<script>
+const ERD_CONTAINER_ID = 'erd-detailed';
+const ENTITY_BORDER_RADIUS = 8;
+
+const renderDiagram = async () => {
+  const container = document.getElementById(ERD_CONTAINER_ID);
+  if (!container) {
+    return;
+  }
+
+  if (typeof mermaid === 'undefined') {
+    container.textContent = 'Unable to load Mermaid to render the ER diagram.';
+    return;
+  }
+
+  const sharedDependenciesReady =
+    typeof window.guildOsGetPalette === 'function' &&
+    typeof window.guildOsWaitForFonts === 'function' &&
+    typeof window.guildOsCreateMermaidConfig === 'function' &&
+    typeof window.guildOsDetailedDiagram === 'string' &&
+    typeof window.guildOsApplyRoundedEntityBorders === 'function';
+
+  if (!sharedDependenciesReady) {
+    container.textContent = 'Unable to load shared ER diagram dependencies.';
+    return;
+  }
+
+  const dark = window.matchMedia?.('(prefers-color-scheme: dark)').matches ?? false;
+  const palette = window.guildOsGetPalette(dark);
+
+  try {
+    document.body.style.backgroundColor = palette.page;
+    document.body.style.color = palette.text;
+
+    await window.guildOsWaitForFonts();
+    mermaid.initialize(window.guildOsCreateMermaidConfig(dark));
+
+    const { svg } = await mermaid.render('erd-svg', window.guildOsDetailedDiagram);
+    container.innerHTML = svg;
+    window.guildOsApplyRoundedEntityBorders(`#${ERD_CONTAINER_ID}`, ENTITY_BORDER_RADIUS);
+  } catch (error) {
+    console.error('Failed to render ER diagram.', error);
+    container.textContent = 'Unable to render the ER diagram.';
+  }
+};
+
+void renderDiagram();
+</script>
+</body>
+</html>
